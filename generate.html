@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Генератор QR-кода</title>
+  <link rel="stylesheet" href="style.css">
+  <!-- QR-code library -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+</head>
+<body>
+
+<header>
+  <h1 class="logo" onclick="window.location.href='index.html'" style="cursor:pointer;">
+    <svg class="icon" viewBox="0 0 24 24" width="28" height="28">
+      <rect x="2" y="2" width="7" height="7" fill="none" stroke="currentColor" stroke-width="2"/>
+      <rect x="15" y="2" width="7" height="7" fill="none" stroke="currentColor" stroke-width="2"/>
+      <rect x="2" y="15" width="7" height="7" fill="none" stroke="currentColor" stroke-width="2"/>
+      <rect x="4" y="4" width="3" height="3" fill="currentColor"/>
+      <rect x="16" y="4" width="3" height="3" fill="currentColor"/>
+      <rect x="4" y="16" width="3" height="3" fill="currentColor"/>
+      <rect x="11" y="5" width="2" height="2" fill="currentColor"/>
+      <rect x="13" y="7" width="2" height="2" fill="currentColor"/>
+      <rect x="11" y="11" width="2" height="2" fill="currentColor"/>
+      <rect x="7" y="13" width="2" height="2" fill="currentColor"/>
+      <rect x="12" y="15" width="2" height="2" fill="currentColor"/>
+      <rect x="14" y="17" width="2" height="2" fill="currentColor"/>
+    </svg>
+    <span>QR-Master</span>
+  </h1>
+</header>
+
+<div class="lang-switch">
+  <button data-lang="ru">RU</button>
+  <button data-lang="tj">TJ</button>
+  <button data-lang="en">EN</button>
+  <button class="text123">Developer</button>
+</div>
+
+<div class="gen-panel">
+
+  <h2 id="gen-title" class="gen-heading">Генератор <span class="neon">QR-кода</span></h2>
+
+  <!-- Input -->
+  <div class="gen-box">
+    <label id="gen-label" class="gen-label">Введите текст или ссылку:</label>
+    <textarea id="qr-input" class="gen-input" rows="3" placeholder="https://example.com"></textarea>
+
+    <!-- Options row -->
+    <div class="options-row">
+      <div class="option-group">
+        <label id="label-size" class="opt-label">Размер:</label>
+        <select id="qr-size" class="opt-select">
+          <option value="128">128px</option>
+          <option value="200" selected>200px</option>
+          <option value="256">256px</option>
+          <option value="300">300px</option>
+        </select>
+      </div>
+      <div class="option-group">
+        <label id="label-color" class="opt-label">Цвет:</label>
+        <input type="color" id="qr-color" class="opt-color" value="#000000">
+      </div>
+      <div class="option-group">
+        <label id="label-bg" class="opt-label">Фон:</label>
+        <input type="color" id="qr-bg" class="opt-color" value="#ffffff">
+      </div>
+    </div>
+
+    <button id="gen-button" class="text2" onclick="generateQR()">Создать QR-код</button>
+  </div>
+
+  <!-- QR result -->
+  <div id="qr-result" class="qr-result" style="display:none;">
+    <div id="qr-code-container"></div>
+
+    <!-- Download buttons -->
+    <div class="download-row">
+      <button class="dl-btn" onclick="downloadQR('png')">⬇ PNG</button>
+      <button class="dl-btn" onclick="downloadQR('svg')">⬇ SVG</button>
+      <button class="dl-btn" onclick="downloadQR('jpeg')">⬇ JPEG</button>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  /* ── Translations ── */
+  const translations = {
+    ru: {
+      documentTitle: 'Генератор QR-кода',
+      heading: 'Генератор',
+      neon: 'QR-кода',
+      label: 'Введите текст или ссылку:',
+      placeholder: 'https://example.com',
+      labelSize: 'Размер:',
+      labelColor: 'Цвет:',
+      labelBg: 'Фон:',
+      button: 'Создать QR-код',
+      dlPng: '⬇ PNG',
+      dlSvg: '⬇ SVG',
+      dlJpeg: '⬇ JPEG',
+      errorEmpty: 'Пожалуйста, введите текст или ссылку!'
+    },
+    tj: {
+      documentTitle: 'Созандаи QR-код',
+      heading: 'Созандаи',
+      neon: 'QR-код',
+      label: 'Матн ё истинодро ворид кунед:',
+      placeholder: 'https://example.com',
+      labelSize: 'Андоза:',
+      labelColor: 'Ранг:',
+      labelBg: 'Замина:',
+      button: 'Эҷоди QR-код',
+      dlPng: '⬇ PNG',
+      dlSvg: '⬇ SVG',
+      dlJpeg: '⬇ JPEG',
+      errorEmpty: 'Лутфан матн ё истинод ворид кунед!'
+    },
+    en: {
+      documentTitle: 'QR Code Generator',
+      heading: 'QR Code',
+      neon: 'Generator',
+      label: 'Enter text or URL:',
+      placeholder: 'https://example.com',
+      labelSize: 'Size:',
+      labelColor: 'Color:',
+      labelBg: 'Background:',
+      button: 'Generate QR Code',
+      dlPng: '⬇ PNG',
+      dlSvg: '⬇ SVG',
+      dlJpeg: '⬇ JPEG',
+      errorEmpty: 'Please enter text or a URL!'
+    }
+  };
+
+  let currentLang = localStorage.getItem('qr-lang') || 'ru';
+  let qrInstance = null;
+
+  /* ── Apply language ── */
+  function setLang(lang) {
+    const t = translations[lang] || translations.ru;
+    currentLang = lang;
+    localStorage.setItem('qr-lang', lang);
+    document.documentElement.lang = lang;
+    document.title = t.documentTitle;
+    document.getElementById('gen-title').innerHTML = `${t.heading} <span class="neon">${t.neon}</span>`;
+    document.getElementById('gen-label').textContent = t.label;
+    document.getElementById('qr-input').placeholder = t.placeholder;
+    document.getElementById('label-size').textContent = t.labelSize;
+    document.getElementById('label-color').textContent = t.labelColor;
+    document.getElementById('label-bg').textContent = t.labelBg;
+    document.getElementById('gen-button').textContent = t.button;
+    const dlBtns = document.querySelectorAll('.dl-btn');
+    if (dlBtns[0]) dlBtns[0].textContent = t.dlPng;
+    if (dlBtns[1]) dlBtns[1].textContent = t.dlSvg;
+    if (dlBtns[2]) dlBtns[2].textContent = t.dlJpeg;
+  }
+
+  document.querySelectorAll('.lang-switch button').forEach(btn => {
+    btn.addEventListener('click', () => setLang(btn.dataset.lang));
+  });
+
+  setLang(currentLang);
+
+  /* ── Generate QR ── */
+  function generateQR() {
+    const input = document.getElementById('qr-input').value.trim();
+    const t = translations[currentLang] || translations.ru;
+
+    if (!input) {
+      alert(t.errorEmpty);
+      return;
+    }
+
+    const size   = parseInt(document.getElementById('qr-size').value);
+    const color  = document.getElementById('qr-color').value;
+    const bgColor = document.getElementById('qr-bg').value;
+
+    const container = document.getElementById('qr-code-container');
+    container.innerHTML = '';
+
+    qrInstance = new QRCode(container, {
+      text: input,
+      width: size,
+      height: size,
+      colorDark: color,
+      colorLight: bgColor,
+      correctLevel: QRCode.CorrectLevel.H
+    });
+
+    document.getElementById('qr-result').style.display = 'flex';
+    document.getElementById('qr-result').scrollIntoView({ behavior: 'smooth' });
+  }
+
+  /* ── Download helpers ── */
+  function getCanvas() {
+    return document.querySelector('#qr-code-container canvas');
+  }
+
+  function downloadQR(format) {
+    const canvas = getCanvas();
+    if (!canvas) return;
+
+    if (format === 'svg') {
+      downloadSVG();
+      return;
+    }
+
+    const mimeType = format === 'jpeg' ? 'image/jpeg' : 'image/png';
+    const ext      = format === 'jpeg' ? 'jpeg' : 'png';
+
+    // For JPEG: draw on white background first
+    let dataUrl;
+    if (format === 'jpeg') {
+      const tempCanvas = document.createElement('canvas');
+      tempCanvas.width  = canvas.width;
+      tempCanvas.height = canvas.height;
+      const ctx = tempCanvas.getContext('2d');
+      ctx.fillStyle = document.getElementById('qr-bg').value;
+      ctx.fillRect(0, 0, tempCanvas.width, tempCanvas.height);
+      ctx.drawImage(canvas, 0, 0);
+      dataUrl = tempCanvas.toDataURL(mimeType, 0.95);
+    } else {
+      dataUrl = canvas.toDataURL(mimeType);
+    }
+
+    const a = document.createElement('a');
+    a.href = dataUrl;
+    a.download = `qr-master.${ext}`;
+    a.click();
+  }
+
+  function downloadSVG() {
+    const input   = document.getElementById('qr-input').value.trim();
+    const size    = parseInt(document.getElementById('qr-size').value);
+    const color   = document.getElementById('qr-color').value;
+    const bgColor = document.getElementById('qr-bg').value;
+    const canvas  = getCanvas();
+    if (!canvas) return;
+
+    // Convert canvas pixels to SVG rects
+    const ctx   = canvas.getContext('2d');
+    const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    const scale  = size / canvas.width;
+    let rects = '';
+
+    for (let y = 0; y < canvas.height; y++) {
+      for (let x = 0; x < canvas.width; x++) {
+        const i = (y * canvas.width + x) * 4;
+        const r = imgData.data[i];
+        const g = imgData.data[i + 1];
+        const b = imgData.data[i + 2];
+        // Dark pixel → draw a rect
+        if (r < 128 && g < 128 && b < 128) {
+          rects += `<rect x="${x}" y="${y}" width="1" height="1" fill="${color}"/>`;
+        }
+      }
+    }
+
+    const svgStr = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${canvas.width} ${canvas.height}" width="${size}" height="${size}">
+  <rect width="${canvas.width}" height="${canvas.height}" fill="${bgColor}"/>
+  ${rects}
+</svg>`;
+
+    const blob = new Blob([svgStr], { type: 'image/svg+xml' });
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement('a');
+    a.href     = url;
+    a.download = 'qr-master.svg';
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+</script>
+
+</body>
+</html>

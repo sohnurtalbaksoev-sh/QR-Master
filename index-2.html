@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Создай свой QR-код</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header>
+  <h1 class="logo">
+    <svg class="icon" viewBox="0 0 24 24" width="28" height="28">
+      <rect x="2" y="2" width="7" height="7" fill="none" stroke="currentColor" stroke-width="2"/>
+      <rect x="15" y="2" width="7" height="7" fill="none" stroke="currentColor" stroke-width="2"/>
+      <rect x="2" y="15" width="7" height="7" fill="none" stroke="currentColor" stroke-width="2"/>
+      <rect x="4" y="4" width="3" height="3" fill="currentColor"/>
+      <rect x="16" y="4" width="3" height="3" fill="currentColor"/>
+      <rect x="4" y="16" width="3" height="3" fill="currentColor"/>
+      <rect x="11" y="5" width="2" height="2" fill="currentColor"/>
+      <rect x="13" y="7" width="2" height="2" fill="currentColor"/>
+      <rect x="11" y="11" width="2" height="2" fill="currentColor"/>
+      <rect x="7" y="13" width="2" height="2" fill="currentColor"/>
+      <rect x="12" y="15" width="2" height="2" fill="currentColor"/>
+      <rect x="14" y="17" width="2" height="2" fill="currentColor"/>
+    </svg>
+    <span>QR-Master</span>
+  </h1>
+</header>
+
+<div class="lang-switch">
+  <button data-lang="ru">RU</button>
+  <button data-lang="tj">TJ</button>
+  <button data-lang="en">EN</button>
+</div>
+
+<div class="hero-panel">
+  <h1 id="main-title" class="text">Добро пожаловать в <span class="neon" id="highlight">QR-код</span></h1>
+  <h1 id="subtitle" class="text1">Здесь вы можете создать свой уникальный QR-код для различных целей</h1>
+  <button id="action-button" class="text2" onclick="goToGenerator()">Генерировать QR-код</button>
+</div>
+
+<script>
+  const translations = {
+    ru: {
+      title: 'Добро пожаловать в',
+      neon: 'QR-Master',
+      subtitle: 'Здесь вы можете создать свой уникальный QR-код для различных целей',
+      button: 'Генерировать QR-код',
+      documentTitle: 'Создай свой QR-код',
+    },
+    tj: {
+      title: 'Хуш омадед ба',
+      neon: 'QR-Master',
+      subtitle: 'Инҷо шумо метавонед QR-коди хос барои мақсадҳои гуногун созмон диҳед',
+      button: 'Эҷоди QR-код',
+      documentTitle: 'QR-коди худро эҷод кунед'
+    },
+    en: {
+      title: 'Welcome to',
+      neon: 'QR-Master',
+      subtitle: 'Here you can create your own unique QR code for different purposes',
+      button: 'Generate QR code',
+      documentTitle: 'Create your QR code'
+    }
+  };
+
+  let currentLang = localStorage.getItem('qr-lang') || 'ru';
+  setLang(currentLang);
+
+  document.querySelectorAll('.lang-switch button').forEach(button => {
+    button.addEventListener('click', () => {
+      currentLang = button.dataset.lang;
+      setLang(currentLang);
+    });
+  });
+
+  function setLang(lang) {
+    const text = translations[lang] || translations.ru;
+    document.documentElement.lang = lang;
+    document.title = text.documentTitle;
+    document.getElementById('main-title').innerHTML = `${text.title} <span class="neon" id="highlight">${text.neon}</span>`;
+    document.getElementById('subtitle').textContent = text.subtitle;
+    document.getElementById('action-button').textContent = text.button;
+  }
+
+  function goToGenerator() {
+    localStorage.setItem('qr-lang', currentLang);
+    window.location.href = 'generate.html';
+  }
+</script>
+
+</body>
+</html>
